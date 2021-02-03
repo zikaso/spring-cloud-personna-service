@@ -20,7 +20,8 @@ public class SpringCloudPersonnaServiceApplication  implements CommandLineRunner
 
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) throws Exception
+    {
 
         personnaRepo.save( new Personna(1,"azizi","azizi.zzkaria@gmail.com"));
         personnaRepo.save( new Personna(2,"hamiba","hamiba@gmail.com"));
