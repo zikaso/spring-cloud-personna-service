@@ -1,10 +1,14 @@
 package com.example.demo.security;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
@@ -15,7 +19,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     // we user {noop} in password to ignore decrypt  password
     protected void configure(AuthenticationManagerBuilder auth) throws Exception
     {
-        auth.inMemoryAuthentication().withUser("user1").password("{noop}123").roles("USER");
+        // local object of crypt password
+        PasswordEncoder passwordEncoder=passwordEncoder();
+
+        auth.inMemoryAuthentication().withUser("user1").password( passwordEncoder.encode("123")).roles("USER");
         auth.inMemoryAuthentication().withUser("user2").password("{noop}123").roles("ADMIN");
         auth.inMemoryAuthentication().withUser("user2").password("{noop}123").roles("ADMIN" ,"USER");
     }
@@ -23,17 +30,31 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
-          http.formLogin(); // use default form login provide by spring , we can set our one form . loginPage("/login")  rest Controller
-        // http.httpBasic() basic from provide by browser
+         // use default form login provide by spring , we can set our one form . loginPage("/login")  rest Controller
+         // http.httpBasic() basic from provide by browser
+            http.formLogin();
+
+          // 1 -Check  specific http requests must to be login and has Role
+             http.authorizeRequests().antMatchers("/personnas**/**").hasRole("ADMIN");
+             //http.authorizeRequests().antMatchers(HttpMethod.GET ,"/personnas**/**").hasAnyAuthority("USER");
+
+          //2-Allow specific  http requests to target resource
+            http.authorizeRequests().antMatchers("/consol**/**").permitAll();
+
+        //3-ALL other http requests must  to be login
+           http.authorizeRequests().anyRequest().authenticated();
 
 
-         // Check this specific http requests must to be login and has Role
-            http.authorizeRequests().antMatchers("/personnas/**/**").hasRole("ADMIN");
-         // http.authorizeRequests().antMatchers(HttpMethod.GET ,"/personnas/**/**").hasAnyAuthority("USER");
+       // http.csrf().disable(); //  if we use JWT  we should disable  sand and check  token input hidden with  Coockies session_id
+       // http.exceptionHandling().accessDeniedPage("/error");
 
-        // ALL other http requests must  to be login
-          http.authorizeRequests().anyRequest().authenticated();
 
-         // http.csrf().disable(); //  if we use JWT  we should disable  sand and check  token input hidden with  Coockies session_id
+
     }
+
+    @Bean
+  public PasswordEncoder passwordEncoder(){
+        return  new BCryptPasswordEncoder();
+  }
+
 }
